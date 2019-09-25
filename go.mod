@@ -11,6 +11,6 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/skycoin/skycoin v0.26.0 // indirect
 	github.com/stretchr/testify v1.3.0
-	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
+	golang.org/x/net v0.0.0-20190923162816-aa69164e4478
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 )

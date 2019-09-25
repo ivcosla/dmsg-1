@@ -3,10 +3,12 @@ package dmsg
 import (
 	"bytes"
 	"context"
+	"net"
 	"testing"
 
 	"github.com/SkycoinProject/skycoin/src/util/logging"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/nettest"
 
 	"github.com/SkycoinProject/dmsg/cipher"
 	"github.com/SkycoinProject/dmsg/disc"
@@ -16,6 +18,10 @@ func TestNewTransport(t *testing.T) {
 	log := logging.MustGetLogger("dmsg_test")
 	tr := NewTransport(nil, log, Addr{}, Addr{}, 0, func() {})
 	assert.NotNil(t, tr)
+}
+
+func TestTransportInterface(t *testing.T) {
+	nettest.TestConn(t, transportMakePipe)
 }
 
 func BenchmarkNewTransport(b *testing.B) {
@@ -131,20 +137,32 @@ func createBenchmarkClients() (initTp, respTp *Transport, err error) {
 		return nil, nil, err
 	}
 
+	var listener *Listener
+	go func() {
+		listener, err = responder.Listen(port)
+		if err != nil {
+			return
+		}
+
+		respTp, err = listener.AcceptTransport()
+		if err != nil {
+			return
+		}
+	}()
+
 	initTp, err = initiator.Dial(ctx, responder.pk, port)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	listener, err := responder.Listen(port)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	respTp, err = listener.AcceptTransport()
-	if err != nil {
-		return nil, nil, err
-	}
-
 	return initTp, respTp, nil
+}
+
+func transportMakePipe() (c1, c2 net.Conn, stop func(), err error) {
+	c1, c2, err = createBenchmarkClients()
+	stop = func() {
+		c1.Close() // nolint
+		c2.Close() // nolint
+	}
+	return
 }
